@@ -17,6 +17,18 @@ def conectar_google_sheets():
     return aba
 
 st.set_page_config(page_title="Grupo Projeta", layout="wide")
+st.markdown("""
+    <style>
+        /* Esconde a barra de ferramentas do Streamlit */
+        .stAppHeader.st-emotion-cache-h4xjwg.e4hpqof0,
+        ._terminalButton_rix23_138 
+         {
+        
+            visibility: hidden;
+        }
+
+    </style>
+""", unsafe_allow_html=True)
 
 c1, c2 = st.columns([2, 1])
 with c1:
