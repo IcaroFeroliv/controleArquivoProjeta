@@ -4,10 +4,13 @@ import io
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
+import json
+from io import StringIO
 
 def conectar_google_sheets():
     escopos = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-    credenciais = ServiceAccountCredentials.from_json_keyfile_name('credenciais.json', escopos)  
+    json_credencial = st.secrets["GOOGLE_SHEETS_CREDENTIALS"]
+    credenciais = ServiceAccountCredentials.from_json_keyfile_dict(json.loads(json_credencial), escopos)  
     cliente = gspread.authorize(credenciais)
     planilha = cliente.open("ControleArquivosProjeta")  
     aba = planilha.sheet1
