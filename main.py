@@ -20,10 +20,8 @@ st.set_page_config(page_title="Grupo Projeta", layout="wide")
 st.markdown("""
     <style>
         /* Esconde a barra de ferramentas do Streamlit */
-        .stAppHeader.st-emotion-cache-h4xjwg.e4hpqof0,
-        ._terminalButton_rix23_138 
+        header
          {
-        
             visibility: hidden;
         }
 
@@ -134,7 +132,7 @@ if st.button("Renomear arquivos"):
 
         if len(arquivos_renomeados) == int(qtd_projetos):
             st.session_state['arquivos_prontos'] = arquivos_renomeados
-            st.success("Arquivos processados. Prontos para download!")
+            st.success("Arquivos processados. Aguarde para download!")
 
             try:
                 aba = conectar_google_sheets()
