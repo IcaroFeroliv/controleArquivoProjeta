@@ -39,7 +39,7 @@ co1, co2 = st.columns(2)
 with co1:
     responsavel = st.text_input("Responsável")
 with co2:
-    caminho = st.text_input("Caminho")
+    caminho = st.text_input("Caminho", help="Caminho onde o arquivo vai ser salvo na rede.")
 
 col1, col2, col3 = st.columns(3)
 with col1:
@@ -49,7 +49,7 @@ with col1:
         "DGN - Diagnóstico", "PGN - Prognóstico", "ATA - Ata de Reunião", "RLT - Relatório"
     ])
 with col2:
-    numero = st.number_input("ID Clickup", step=1)
+    numero = st.number_input("ID ClickUp", step=1)
 with col3:
     tipo_fase = st.selectbox("Fase", [
         "Selecione", "ATP - Nível de Anteprojeto", "BSC - Nível Básico", "EXE - Nível Executivo"
