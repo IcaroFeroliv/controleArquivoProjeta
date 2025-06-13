@@ -17,6 +17,7 @@ def conectar_google_sheets():
     return aba
 
 st.set_page_config(page_title="Grupo Projeta", layout="wide")
+
 st.markdown("""
     <style>
         /* Esconde a barra de ferramentas do Streamlit */
@@ -48,11 +49,14 @@ with col1:
         "DGN - Diagnóstico", "PGN - Prognóstico", "ATA - Ata de Reunião", "RLT - Relatório"
     ])
 with col2:
+    numero = st.number_input("ID Clickup", step=1)
+with col3:
     tipo_fase = st.selectbox("Fase", [
         "Selecione", "ATP - Nível de Anteprojeto", "BSC - Nível Básico", "EXE - Nível Executivo"
     ])
-with col3:
-    disciplina = st.selectbox("Disciplina", [
+colu1, colu2, colu3 = st.columns(3)
+with colu1:
+        disciplina = st.selectbox("Disciplina", [
         "Selecine", "ARQ - Projeto Arquitetônico", "CBM - Projeto de Cabeamento Estruturado",
         "CFV - Projeto de Alarme e Circuito Fechado de Televisão", "CLM - Projeto de Climatização",
         "CMV - Projeto de Comunicação Visual", "DRE - Projeto de Drenagem Pluvial",
@@ -65,20 +69,21 @@ with col3:
         "SND - Sondagem", "SNL - Projeto de Sinalização Vertical e Horizontal",
         "SON - Projeto de Sonorização", "SPD - Projeto de Sistema de Proteção a Descargas Atmosféricas",
         "TOP - Projeto Topográfico", "TRP - Projeto de Terraplenagem", "URB - Projeto de Urbanização"
-    ])
+        ])
 
-colu1, colu2, colu3 = st.columns(3)
-with colu1:
-    contratante = st.text_input("Contratante", placeholder="CMD",help="Abreviação do Contrato (nome da prefeitura ou município) isso normalmente é definido pela gerencia.")
 with colu2:
-    projeto = st.text_input("Projeto", placeholder="CMR",help="Abreviação geralmente definida pela gerência")
+    contratante = st.text_input("Contratante", placeholder="CMD",help="Abreviação do Contrato (nome da prefeitura ou município) isso normalmente é definido pela gerencia.")
+    contratante_m = contratante.upper()
 with colu3:
-    qtd_projetos = st.number_input("Quantidade de arquivos", min_value=1, step=1)
-
-colun1, colun2 = st.columns(2)
+    projeto = st.text_input("Projeto", placeholder="CMR",help="Abreviação geralmente definida pela gerência")
+    projeto_m = projeto.upper()
+colun1, colun2, colun3 = st.columns(3)
 with colun1:
-    descricao = st.text_input("Descrição", placeholder="Planta Baixa",help="Opcional")
+    qtd_projetos = st.number_input("Quantidade de arquivos", min_value=1, step=1)
 with colun2:
+    descricao = st.text_input("Descrição", placeholder="Planta Baixa",help="Opcional")
+    descricao_m = descricao.upper()
+with colun3:
     revisao = st.number_input("Revisão", min_value=0, step=1)
     
 # Upload dos arquivos
@@ -98,8 +103,8 @@ if st.button("Renomear arquivos"):
         "Tipo de Arquivo": tipo_arquivo if tipo_arquivo != "Selecione" else "",
         "Fase": tipo_fase if tipo_fase != "Selecione" else "",
         "Disciplina": disciplina if disciplina != "Selecine" else "",
-        "Contratante": contratante.strip(),
-        "Projeto": projeto.strip(),
+        "Contratante": contratante_m.strip(),
+        "Projeto": projeto_m.strip(),
     }
 
     faltando = [nome for nome, valor in campos_obrigatorios.items() if not valor]
@@ -119,10 +124,10 @@ if st.button("Renomear arquivos"):
                 total = str(int(qtd_projetos)).zfill(2)
                 codigo_arquivo = f"{ordem}{total}"
 
-                if descricao.strip():
-                    nome_base = f"{prefixo_arquivo}-{prefixo_fase}-{prefixo_disciplina}-{contratante}-{projeto}-{codigo_arquivo}-{descricao}-REV0{revisao}"
+                if descricao_m.strip():
+                    nome_base = f"{prefixo_arquivo}-{numero}-{prefixo_fase}-{prefixo_disciplina}-{contratante_m}-{projeto_m}-{codigo_arquivo}-{descricao_m}-REV0{revisao}"
                 else:
-                    nome_base = f"{prefixo_arquivo}-{prefixo_fase}-{prefixo_disciplina}-{contratante}-{projeto}-{codigo_arquivo}-REV0{revisao}"
+                    nome_base = f"{prefixo_arquivo}-{numero}-{prefixo_fase}-{prefixo_disciplina}-{contratante_m}-{projeto_m}-{codigo_arquivo}-REV0{revisao}"
 
                 extensao = os.path.splitext(file.name)[1]
                 novo_nome = f"{nome_base}{extensao}"
@@ -155,3 +160,4 @@ if 'arquivos_prontos' in st.session_state:
             file_name=nome_arquivo,
             mime="application/octet-stream"
         )
+    st.info(f"Após o download, mova o arquivo para: `{caminho}`")
