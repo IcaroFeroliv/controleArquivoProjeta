@@ -6,6 +6,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
 import json
 from io import StringIO
+import pytz
 
 st.set_page_config(page_title="Grupo Projeta", layout="wide")
 # Sessão de usuário
@@ -186,7 +187,8 @@ if perfil == "Coordenador":
                     try:
                         aba = conectar_google_sheets()
                         for nome_arquivo, _ in arquivos_renomeados:
-                            data_hora = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                            fuso_brasil = pytz.timezone("America/Sao_Paulo")
+                            data_hora = datetime.now(fuso_brasil).strftime("%d/%m/%Y %H:%M:%S")
                             aba.append_row([responsavel, caminho, nome_arquivo, data_hora])
                     except Exception as e:
                         st.error(f"Erro ao registrar no Google Sheets: {e}")
@@ -369,7 +371,8 @@ else:
                 try:
                     aba = conectar_google_sheets()
                     for nome_arquivo, _ in arquivos_renomeados:
-                        data_hora = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                        fuso_brasil = pytz.timezone("America/Sao_Paulo")
+                        data_hora = datetime.now(fuso_brasil).strftime("%d/%m/%Y %H:%M:%S")
                         aba.append_row([responsavel, caminho, nome_arquivo, data_hora])
                 except Exception as e:
                     st.error(f"Erro ao registrar no Google Sheets: {e}")
