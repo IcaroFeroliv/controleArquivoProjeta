@@ -13,6 +13,17 @@ st.set_page_config(page_title="Grupo Projeta", layout="wide")
 if "usuario" not in st.session_state:
     st.session_state.usuario = None
 
+st.markdown("""
+    <style>
+        /* Oculta a barra de ações (canto superior direito) */
+        [data-testid="stToolbarActions"],
+        /* Oculta o menu principal (os três pontinhos ...) */
+        [data-testid="stMainMenu"] {
+            display: none !important;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 USUARIOS = {
     "Coordenador": {
         "perfil": st.secrets["usuarios"]["Coordenador"]["perfil"],
