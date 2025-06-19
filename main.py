@@ -51,9 +51,9 @@ perfil = USUARIOS[st.session_state.usuario]["perfil"]
 
 
 if perfil == "Coordenador":
-    abas = st.tabs(["Cadastro de Projeto", "Controle de Arquivos"])
+    abas = st.tabs(["Cadastro de Tarefa", "Cadastro de Descrição", "Controle de Arquivos"])
 
-    with abas[1]:
+    with abas[2]:
         def conectar_google_sheets():
             escopos = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
             json_credencial = st.secrets["GOOGLE_SHEETS_CREDENTIALS"]
@@ -80,6 +80,22 @@ if perfil == "Coordenador":
 
         tarefas = st.session_state["tarefas"]  
 
+        def buscar_descricoes():
+            try:
+                planilha = conectar_google_sheets().spreadsheet
+                aba_descricoes = planilha.worksheet("Descricoes")
+                registros = aba_descricoes.get_all_records()
+                return registros
+            except Exception as e:
+                st.error(f"Erro ao carregar descrições: {e}")
+                return []
+
+        if "descricoes" not in st.session_state:
+            st.session_state["descricoes"] = buscar_descricoes()
+
+        descricoes = st.session_state["descricoes"]
+
+
         c1, c2 = st.columns([2, 1])
         with c1:
             st.title("Planos Urbanos")
@@ -95,9 +111,8 @@ if perfil == "Coordenador":
         col1, col2 = st.columns(2)
         with col1:
             tipo_arquivo = st.selectbox("Arquivo", [
-                "Selecione", "PRJ - Projeto", "MMD - Memorial Descritivo", "MMC - Memória de Cálculo",
-                "OFR - Ofício de Resposta", "OFC - Ofício Geral", "PLN - Planilha Orçamentária",
-                "DGN - Diagnóstico", "PGN - Prognóstico", "ATA - Ata de Reunião", "RLT - Relatório"
+                "Selecione", "ATA - Ata de Reunião", "PPT - Apresentação", "DCLV - Declividade", "DGN - Diagnóstico", "EST - Estudo", "GPKG - GeoPackage", "LAU - Laudo", "LAYOUT - Layout", "MANUAL - Manual"
+                "MMD - Memorial Descritivo", "MIN - Minuta", "MDL - Modelo", "OFI - Oficio", "PLN - Planilha", "PRJ - Projeto", "RLT - Relatório"
             ])
         with col2:
             nomes_tarefas = [t["nome_da_tarefa"] for t in tarefas]
@@ -107,30 +122,24 @@ if perfil == "Coordenador":
         colu1, colu2, colu3 = st.columns(3)
         with colu1:
             tipo_fase = st.selectbox("Fase", [
-                "Selecione", "ATP - Nível de Anteprojeto", "BSC - Nível Básico", "EXE - Nível Executivo"
+                "Selecione", "FIN - Nível Final", "PRE - Nível Preliminar"
             ])
         with colu2:
             disciplina = st.selectbox("Disciplina", [
-                "Selecine", "ARQ - Projeto Arquitetônico", "CBM - Projeto de Cabeamento Estruturado",
-                "CFV - Projeto de Alarme e Circuito Fechado de Televisão", "CLM - Projeto de Climatização",
-                "CMV - Projeto de Comunicação Visual", "DRE - Projeto de Drenagem Pluvial",
-                "EFV - Projeto de Energia Fotovoltaica", "ELE - Projeto de Elétrico", "EST - Projeto Estrutural",
-                "GAS - Projeto de Gás", "GEO - Projeto de Geométrico", "GSM - Projeto de Gases Medicinais",
-                "HDS - Projeto Hidrossanitário", "ORC - Orçamento", "PAV - Projeto de Pavimentação",
-                "PCI - Projeto de Prevenção e Combate a Incêndio", "PSG - Projeto de Paisagismo",
-                "R3D - Projeto de Representação Tridimensional", "RST - Projeto de Restauro",
-                "SAA - Projeto de Sistema de Abastecimento de Água", "SES - Projeto de Sistema de Esgoto Sanitário",
-                "SND - Sondagem", "SNL - Projeto de Sinalização Vertical e Horizontal",
-                "SON - Projeto de Sonorização", "SPD - Projeto de Sistema de Proteção a Descargas Atmosféricas",
-                "TOP - Projeto Topográfico", "TRP - Projeto de Terraplenagem", "URB - Projeto de Urbanização"
+                "Selecine", "PELE - Eletrica", "PINF - Infraestrutura", "PLU - Integrado / Gerais do Setor", "PJUR - Jurídico", "PMAB - Meio Ambiente", "PSOC - Social", "PTOP - Topografia", "PURB - Urbanismo / Geotecnia"
             ])
         with colu3:
             qtd_projetos = st.number_input("Quantidade de arquivos", min_value=1, step=1)
 
         colun1, colun2 = st.columns(2)
         with colun1:
-            descricao = st.text_input("Descrição", placeholder="Planta Baixa", help="Opcional")
-            descricao_m = descricao.upper()
+            nomes_descricoes = [d["descricao_tarefa"] for d in descricoes]
+            descricao_selecionada = st.selectbox("Descrição", nomes_descricoes)
+            sigla_descricao = next(
+            (d["sigla_descricao"] for d in descricoes if d["descricao_tarefa"] == descricao_selecionada),
+            ""
+        )
+
         with colun2:
             revisao = st.number_input("Revisão", min_value=0, step=1)
 
@@ -169,10 +178,10 @@ if perfil == "Coordenador":
                         total = str(int(qtd_projetos)).zfill(2)
                         codigo_arquivo = f"{ordem}{total}"
 
-                        if descricao_m.strip():
-                            nome_base = f"{prefixo_arquivo}-{numero_tarefa}-{prefixo_fase}-{prefixo_disciplina}-{codigo_arquivo}-{descricao_m}-REV0{revisao}"
-                        else:
+                        if descricao_selecionada == "Sem descrição":
                             nome_base = f"{prefixo_arquivo}-{numero_tarefa}-{prefixo_fase}-{prefixo_disciplina}-{codigo_arquivo}-REV0{revisao}"
+                        else:
+                            nome_base = f"{prefixo_arquivo}-{numero_tarefa}-{prefixo_fase}-{prefixo_disciplina}-{codigo_arquivo}-{sigla_descricao}-REV0{revisao}"
 
                         extensao = os.path.splitext(file.name)[1]
                         novo_nome = f"{nome_base}{extensao}"
@@ -238,15 +247,47 @@ if perfil == "Coordenador":
             else:
                 st.warning("Preencha o nome da tarefa antes de salvar.")
 
+    with abas[1]:
+        c1, c2 = st.columns([2, 1])
+        with c1:
+            st.title("Planos Urbanos")
+        with c2:
+            st.image("projeta.png", width=350)
+
+        col1, col2 = st.columns(2)
+        with col1:
+            descricao_tarefa = st.text_input("Descrição")
+        with col2:
+            sigla_descricao = st.text_input("Sigla", max_chars=10)
+
+        def salvar_descricao(desc, sigla):
+            try:
+                planilha = conectar_google_sheets().spreadsheet
+                aba_descricoes = planilha.worksheet("Descricoes")
+                aba_descricoes.append_row([desc, sigla])
+                return True
+            except Exception as e:
+                st.error(f"Erro ao salvar descrição: {e}")
+                return False
+
+        if st.button("Salvar Descrição"):
+            if descricao_tarefa.strip() and sigla_descricao.strip():
+                sucesso = salvar_descricao(descricao_tarefa.strip(), sigla_descricao.strip().upper())
+                if sucesso:
+                    st.success("Descrição adicionada com sucesso!")
+                    st.session_state.pop("descricoes", None)
+            else:
+                st.warning("Preencha os dois campos para salvar.")
+
 else:
     def conectar_google_sheets():
-        escopos = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-        json_credencial = st.secrets["GOOGLE_SHEETS_CREDENTIALS"]
-        credenciais = ServiceAccountCredentials.from_json_keyfile_dict(json.loads(json_credencial), escopos)  
-        cliente = gspread.authorize(credenciais)
-        planilha = cliente.open("ControleArquivosProjeta")  
-        aba = planilha.sheet1
-        return aba
+            escopos = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+            json_credencial = st.secrets["GOOGLE_SHEETS_CREDENTIALS"]
+            credenciais = ServiceAccountCredentials.from_json_keyfile_dict(json.loads(json_credencial), escopos)  
+            cliente = gspread.authorize(credenciais)
+            planilha = cliente.open("ControleArquivosProjeta")  
+            aba = planilha.sheet1
+            return aba
 
     # ✅ Buscar tarefas só uma vez ao abrir
     def buscar_tarefas():
@@ -264,6 +305,23 @@ else:
         st.session_state["tarefas"] = buscar_tarefas()
 
     tarefas = st.session_state["tarefas"]  
+
+    def buscar_descricoes():
+        try:
+            planilha = conectar_google_sheets().spreadsheet
+            aba_descricoes = planilha.worksheet("Descricoes")
+            registros = aba_descricoes.get_all_records()
+            return registros
+        except Exception as e:
+            st.error(f"Erro ao carregar descrições: {e}")
+            return []
+
+    if "descricoes" not in st.session_state:
+        st.session_state["descricoes"] = buscar_descricoes()
+
+    descricoes = st.session_state["descricoes"]
+
+
     c1, c2 = st.columns([2, 1])
     with c1:
         st.title("Planos Urbanos")
@@ -279,9 +337,8 @@ else:
     col1, col2 = st.columns(2)
     with col1:
         tipo_arquivo = st.selectbox("Arquivo", [
-            "Selecione", "PRJ - Projeto", "MMD - Memorial Descritivo", "MMC - Memória de Cálculo",
-            "OFR - Ofício de Resposta", "OFC - Ofício Geral", "PLN - Planilha Orçamentária",
-            "DGN - Diagnóstico", "PGN - Prognóstico", "ATA - Ata de Reunião", "RLT - Relatório"
+            "Selecione", "ATA - Ata de Reunião", "PPT - Apresentação", "DCLV - Declividade", "DGN - Diagnóstico", "EST - Estudo", "GPKG - GeoPackage", "LAU - Laudo", "LAYOUT - Layout", "MANUAL - Manual"
+            "MMD - Memorial Descritivo", "MIN - Minuta", "MDL - Modelo", "OFI - Oficio", "PLN - Planilha", "PRJ - Projeto", "RLT - Relatório"
         ])
     with col2:
         nomes_tarefas = [t["nome_da_tarefa"] for t in tarefas]
@@ -291,30 +348,24 @@ else:
     colu1, colu2, colu3 = st.columns(3)
     with colu1:
         tipo_fase = st.selectbox("Fase", [
-            "Selecione", "ATP - Nível de Anteprojeto", "BSC - Nível Básico", "EXE - Nível Executivo"
+            "Selecione", "FIN - Nível Final", "PRE - Nível Preliminar"
         ])
     with colu2:
         disciplina = st.selectbox("Disciplina", [
-            "Selecine", "ARQ - Projeto Arquitetônico", "CBM - Projeto de Cabeamento Estruturado",
-            "CFV - Projeto de Alarme e Circuito Fechado de Televisão", "CLM - Projeto de Climatização",
-            "CMV - Projeto de Comunicação Visual", "DRE - Projeto de Drenagem Pluvial",
-            "EFV - Projeto de Energia Fotovoltaica", "ELE - Projeto de Elétrico", "EST - Projeto Estrutural",
-            "GAS - Projeto de Gás", "GEO - Projeto de Geométrico", "GSM - Projeto de Gases Medicinais",
-            "HDS - Projeto Hidrossanitário", "ORC - Orçamento", "PAV - Projeto de Pavimentação",
-            "PCI - Projeto de Prevenção e Combate a Incêndio", "PSG - Projeto de Paisagismo",
-            "R3D - Projeto de Representação Tridimensional", "RST - Projeto de Restauro",
-            "SAA - Projeto de Sistema de Abastecimento de Água", "SES - Projeto de Sistema de Esgoto Sanitário",
-            "SND - Sondagem", "SNL - Projeto de Sinalização Vertical e Horizontal",
-            "SON - Projeto de Sonorização", "SPD - Projeto de Sistema de Proteção a Descargas Atmosféricas",
-            "TOP - Projeto Topográfico", "TRP - Projeto de Terraplenagem", "URB - Projeto de Urbanização"
+            "Selecine", "PELE - Eletrica", "PINF - Infraestrutura", "PLU - Integrado / Gerais do Setor", "PJUR - Jurídico", "PMAB - Meio Ambiente", "PSOC - Social", "PTOP - Topografia", "PURB - Urbanismo / Geotecnia"
         ])
     with colu3:
         qtd_projetos = st.number_input("Quantidade de arquivos", min_value=1, step=1)
 
     colun1, colun2 = st.columns(2)
     with colun1:
-        descricao = st.text_input("Descrição", placeholder="Planta Baixa", help="Opcional")
-        descricao_m = descricao.upper()
+        nomes_descricoes = [d["descricao_tarefa"] for d in descricoes]
+        descricao_selecionada = st.selectbox("Descrição", nomes_descricoes)
+        sigla_descricao = next(
+        (d["sigla_descricao"] for d in descricoes if d["descricao_tarefa"] == descricao_selecionada),
+        ""
+    )
+
     with colun2:
         revisao = st.number_input("Revisão", min_value=0, step=1)
 
@@ -353,10 +404,10 @@ else:
                     total = str(int(qtd_projetos)).zfill(2)
                     codigo_arquivo = f"{ordem}{total}"
 
-                    if descricao_m.strip():
-                        nome_base = f"{prefixo_arquivo}-{numero_tarefa}-{prefixo_fase}-{prefixo_disciplina}-{codigo_arquivo}-{descricao_m}-REV0{revisao}"
-                    else:
+                    if descricao_selecionada == "Sem descrição":
                         nome_base = f"{prefixo_arquivo}-{numero_tarefa}-{prefixo_fase}-{prefixo_disciplina}-{codigo_arquivo}-REV0{revisao}"
+                    else:
+                        nome_base = f"{prefixo_arquivo}-{numero_tarefa}-{prefixo_fase}-{prefixo_disciplina}-{codigo_arquivo}-{sigla_descricao}-REV0{revisao}"
 
                     extensao = os.path.splitext(file.name)[1]
                     novo_nome = f"{nome_base}{extensao}"
