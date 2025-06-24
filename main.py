@@ -270,6 +270,7 @@ if perfil == "Coordenador":
             descricao_tarefa = st.text_input("Descrição")
         with col2:
             sigla_descricao = st.text_input("Sigla", max_chars=10)
+            upper_sigla = sigla_descricao.upper()
 
         def salvar_descricao(desc, sigla):
             try:
@@ -283,7 +284,7 @@ if perfil == "Coordenador":
 
         if st.button("Salvar Descrição"):
             if descricao_tarefa.strip() and sigla_descricao.strip():
-                sucesso = salvar_descricao(descricao_tarefa.strip(), sigla_descricao.strip().upper())
+                sucesso = salvar_descricao(descricao_tarefa.strip(), upper_sigla.strip().upper())
                 if sucesso:
                     st.success("Descrição adicionada com sucesso!")
                     st.session_state.pop("descricoes", None)
