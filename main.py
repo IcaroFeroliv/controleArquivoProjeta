@@ -107,7 +107,7 @@ if perfil == "Coordenador":
         colu1, colu2, colu3 = st.columns(3)
         with colu1:
             tipo_fase = st.selectbox("Fase", [
-                "Selecione", "ATP - Nível de Anteprojeto", "BSC - Nível Básico", "EXE - Nível Executivo"
+                "Selecione", "BSC - Nível Básico", "EXE - Nível Executivo"
             ])
         with colu2:
             disciplina = st.selectbox("Disciplina", [
@@ -291,7 +291,7 @@ else:
     colu1, colu2, colu3 = st.columns(3)
     with colu1:
         tipo_fase = st.selectbox("Fase", [
-            "Selecione", "ATP - Nível de Anteprojeto", "BSC - Nível Básico", "EXE - Nível Executivo"
+            "Selecione", "BSC - Nível Básico", "EXE - Nível Executivo"
         ])
     with colu2:
         disciplina = st.selectbox("Disciplina", [
