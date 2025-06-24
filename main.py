@@ -282,7 +282,7 @@ if perfil == "Coordenador":
                 st.error(f"Erro ao salvar descrição: {e}")
                 return False
 
-        if st.button("Salvar Descrição"):
+        if st.button("Adicionar Descrição"):
             if descricao_tarefa.strip() and sigla_descricao.strip():
                 sucesso = salvar_descricao(descricao_tarefa.strip(), upper_sigla.strip().upper())
                 if sucesso:
