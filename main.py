@@ -122,7 +122,7 @@ if perfil == "Coordenador":
         col1, col2 = st.columns(2)
         with col1:
             tipo_arquivo = st.selectbox("Arquivo", [
-                "Selecione", "ATA - Ata de Reunião", "PPT - Apresentação", "DCLV - Declividade", "DGN - Diagnóstico", "EST - Estudo", "GPKG - GeoPackage", "LAU - Laudo", "LAYOUT - Layout", "MANUAL - Manual"
+                "Selecione", "ATA - Ata de Reunião", "PPT - Apresentação", "DCLV - Declividade", "DGN - Diagnóstico", "EST - Estudo", "GPKG - GeoPackage", "LAU - Laudo", "LAYOUT - Layout", "MANUAL - Manual", 
                 "MMD - Memorial Descritivo", "MIN - Minuta", "MDL - Modelo", "OFI - Oficio", "PLN - Planilha", "PRJ - Projeto", "RLT - Relatório"
             ])
         with col2:
@@ -348,7 +348,7 @@ else:
     col1, col2 = st.columns(2)
     with col1:
         tipo_arquivo = st.selectbox("Arquivo", [
-            "Selecione", "ATA - Ata de Reunião", "PPT - Apresentação", "DCLV - Declividade", "DGN - Diagnóstico", "EST - Estudo", "GPKG - GeoPackage", "LAU - Laudo", "LAYOUT - Layout", "MANUAL - Manual"
+            "Selecione", "ATA - Ata de Reunião", "PPT - Apresentação", "DCLV - Declividade", "DGN - Diagnóstico", "EST - Estudo", "GPKG - GeoPackage", "LAU - Laudo", "LAYOUT - Layout", "MANUAL - Manual",
             "MMD - Memorial Descritivo", "MIN - Minuta", "MDL - Modelo", "OFI - Oficio", "PLN - Planilha", "PRJ - Projeto", "RLT - Relatório"
         ])
     with col2:
