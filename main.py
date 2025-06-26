@@ -26,13 +26,13 @@ st.markdown("""
 
 USUARIOS = {
     "Coordenador": {
-        "perfil": st.secrets["usuarios"]["Coordenador"]["perfil"],
-        "senha": st.secrets["usuarios"]["Coordenador"]["senha"]
+        "perfil": st.secrets["usuarios"]["Lideranças"]["perfil"],
+        "senha": st.secrets["usuarios"]["Lideranças"]["senha"]
 
     },
     "Projetista": {
-        "perfil": st.secrets["usuarios"]["Projetista"]["perfil"],
-        "senha": st.secrets["usuarios"]["Projetista"]["senha"]
+        "perfil": st.secrets["usuarios"]["Técnicos"]["perfil"],
+        "senha": st.secrets["usuarios"]["Técnicos"]["senha"]
 
     }
 }
@@ -42,7 +42,7 @@ def login():
     with col2:
         with st.form("login_form"):
             st.markdown("###  Acesso Restrito")
-            usuario = st.text_input("Usuário", placeholder="Coordenador ou Projetista")
+            usuario = st.text_input("Usuário", placeholder="Liderança ou Técnicos")
             senha = st.text_input("Senha", type="password")
             submit = st.form_submit_button("Entrar")
 
@@ -137,7 +137,7 @@ if perfil == "Coordenador":
             ])
         with colu2:
             disciplina = st.selectbox("Disciplina", [
-                "Selecine", "PELE - Eletrica", "PINF - Infraestrutura", "PLU - Integrado / Gerais do Setor", "PJUR - Jurídico", "PMAB - Meio Ambiente", "PSOC - Social", "PTOP - Topografia", "PURB - Urbanismo / Geotecnia"
+                "Selecine", "PELE - Elétrica", "PINF - Infraestrutura", "PLU - Integrado / Gerais do Setor", "PJUR - Jurídico", "PMAB - Meio Ambiente", "PSOC - Social", "PTOP - Topografia", "PURB - Urbanismo / Geotecnia"
             ])
         with colu3:
             qtd_projetos = st.number_input("Quantidade de arquivos", min_value=1, step=1)
