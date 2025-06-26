@@ -42,7 +42,7 @@ def login():
     with col2:
         with st.form("login_form"):
             st.markdown("###  Acesso Restrito")
-            usuario = st.text_input("Usuário", placeholder="Lideranca ou Tecnicos")
+            usuario = st.text_input("Usuário", placeholder="Liderancas ou Tecnicos")
             senha = st.text_input("Senha", type="password")
             submit = st.form_submit_button("Entrar")
 
