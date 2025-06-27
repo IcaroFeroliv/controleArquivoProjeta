@@ -7,6 +7,8 @@ from datetime import datetime
 import json
 from io import StringIO
 import pytz
+import zipfile 
+import io
 
 st.set_page_config(page_title="Grupo Projeta", layout="wide")
 # Sessão de usuário
@@ -53,7 +55,6 @@ def login():
                 else:
                     st.error("Usuário ou senha incorretos.")
 
-# Impede o uso se não estiver logado
 if not st.session_state.usuario:
     login()
     st.stop()
@@ -68,28 +69,26 @@ if perfil == "Liderancas":
         def conectar_google_sheets():
             escopos = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
             json_credencial = st.secrets["GOOGLE_SHEETS_CREDENTIALS"]
-            credenciais = ServiceAccountCredentials.from_json_keyfile_dict(json.loads(json_credencial), escopos)  
+            credenciais = ServiceAccountCredentials.from_json_keyfile_dict(json.loads(json_credencial), escopos) 
             cliente = gspread.authorize(credenciais)
-            planilha = cliente.open("ControleArquivosProjeta")  
+            planilha = cliente.open("ControleArquivosProjeta") 
             aba = planilha.sheet1
             return aba
 
-        # ✅ Buscar tarefas só uma vez ao abrir
         def buscar_tarefas():
             try:
                 planilha = conectar_google_sheets().spreadsheet
                 aba_tarefas = planilha.worksheet("Tarefas")
                 registros = aba_tarefas.get_all_records()
-                return registros  
+                return registros 
             except Exception as e:
                 st.error(f"Erro ao buscar tarefas: {e}")
                 return []
 
-        # ✅ Armazena uma única vez na sessão
         if "tarefas" not in st.session_state:
             st.session_state["tarefas"] = buscar_tarefas()
 
-        tarefas = st.session_state["tarefas"]  
+        tarefas = st.session_state["tarefas"] 
 
         def buscar_descricoes():
             try:
@@ -106,6 +105,42 @@ if perfil == "Liderancas":
 
         descricoes = st.session_state["descricoes"]
 
+        def extrair_prefixo(valor):
+            return valor.split(" - ")[0] if " - " in valor else valor
+
+        def gerar_nomes_arquivos(
+            qtd_projetos, tipo_arquivo, numero_tarefa, tipo_fase, disciplina,
+            descricao_selecionada, sigla_descricao, revisao, extensoes_arquivos=None
+        ):
+            nomes_gerados = []
+            if extensoes_arquivos is None:
+                extensoes_arquivos = [""] * int(qtd_projetos)
+
+            for idx in range(int(qtd_projetos)):
+                extensao = extensoes_arquivos[idx] if idx < len(extensoes_arquivos) else ""
+
+                prefixo_arquivo = extrair_prefixo(tipo_arquivo)
+                prefixo_fase = extrair_prefixo(tipo_fase)
+                prefixo_disciplina = extrair_prefixo(disciplina)
+
+                ordem = str(idx + 1).zfill(2)
+                total = str(int(qtd_projetos)).zfill(2)
+                codigo_arquivo = f"{ordem}{total}"
+
+                if descricao_selecionada == "Sem descrição":
+                    if tipo_fase in ["Em andamento", "Interno"]:
+                        nome_base = f"{prefixo_arquivo}-{numero_tarefa}-{prefixo_disciplina}-{codigo_arquivo}-V0{revisao}"    
+                    else:
+                        nome_base = f"{prefixo_arquivo}-{numero_tarefa}-{prefixo_fase}-{prefixo_disciplina}-{codigo_arquivo}-REV0{revisao}"
+                else:
+                    if tipo_fase in ["Em andamento", "Interno"]:
+                        nome_base = f"{prefixo_arquivo}-{numero_tarefa}-{prefixo_disciplina}-{codigo_arquivo}-{sigla_descricao}-V0{revisao}"
+                    else:
+                        nome_base = f"{prefixo_arquivo}-{numero_tarefa}-{prefixo_fase}-{prefixo_disciplina}-{codigo_arquivo}-{sigla_descricao}-REV0{revisao}"
+                
+                novo_nome = f"{nome_base}{extensao}"
+                nomes_gerados.append(novo_nome)
+            return nomes_gerados
 
         c1, c2 = st.columns([2, 1])
         with c1:
@@ -132,8 +167,7 @@ if perfil == "Liderancas":
 
         colu1, colu2, colu3 = st.columns(3)
         with colu1:
-            tipo_fase = st.selectbox("Fase", ["Selecione", "Em andamento","FIN - Final", "Interno", "PRE - Preliminar"
-            ])
+            tipo_fase = st.selectbox("Fase", ["Selecione", "Em andamento","FIN - Final", "Interno", "PRE - Preliminar"])
         with colu2:
             disciplina = st.selectbox("Disciplina", [
                 "Selecine", "PELE - Elétrica", "PINF - Infraestrutura", "PLU - Integrado / Gerais do Setor", "PJUR - Jurídico", "PMAB - Meio Ambiente", "PSOC - Social", "PTOP - Topografia", "PURB - Urbanismo / Geotecnia"
@@ -146,90 +180,137 @@ if perfil == "Liderancas":
             nomes_descricoes = [d["descricao_tarefa"] for d in descricoes]
             descricao_selecionada = st.selectbox("Descrição", nomes_descricoes)
             sigla_descricao = next(
-            (d["sigla_descricao"] for d in descricoes if d["descricao_tarefa"] == descricao_selecionada),
-            ""
-        )
+                (d["sigla_descricao"] for d in descricoes if d["descricao_tarefa"] == descricao_selecionada),
+                ""
+            )
 
         with colun2:
             revisao = st.number_input("Revisão/Versão", min_value=0, step=1)
 
         uploaded_files = []
         for i in range(int(qtd_projetos)):
-            uploaded_file = st.file_uploader(f"Arquivo {i + 1}", key=f"file_{i}")
+            uploaded_file = st.file_uploader(f"Arquivo {i + 1} (opcional para 'Nome dos arquivos')", key=f"file_uploader_{i}")
             uploaded_files.append(uploaded_file)
 
-        def extrair_prefixo(valor):
-            return valor.split(" - ")[0] if " - " in valor else valor
+        col_btn1, col_btn2 = st.columns(2)
 
-        if st.button("Renomear arquivos"):
-            campos_obrigatorios = {
-                "Responsável": responsavel.strip(),
-                "Caminho": caminho.strip(),
-                "Tipo de Arquivo": tipo_arquivo if tipo_arquivo != "Selecione" else "",
-                "Fase": tipo_fase if tipo_fase != "Selecione" else "",
-                "Disciplina": disciplina if disciplina != "Selecine" else "",
-                "Tarefa": tarefa_selecionada if tarefa_selecionada else ""
-            }
+        with col_btn1:
+            if st.button("Renomear arquivos"):
+                campos_obrigatorios = {
+                    "Responsável": responsavel.strip(),
+                    "Caminho": caminho.strip(),
+                    "Tipo de Arquivo": tipo_arquivo if tipo_arquivo != "Selecione" else "",
+                    "Fase": tipo_fase if tipo_fase != "Selecione" else "",
+                    "Disciplina": disciplina if disciplina != "Selecine" else "",
+                    "Tarefa": tarefa_selecionada if tarefa_selecionada else ""
+                }
 
-            faltando = [nome for nome, valor in campos_obrigatorios.items() if not valor]
+                faltando = [nome for nome, valor in campos_obrigatorios.items() if not valor]
 
-            if faltando:
-                st.error(f"Preencha os campos obrigatórios: {', '.join(faltando)}")
-            else:
-                arquivos_renomeados = []
+                if faltando:
+                    st.error(f"Preencha os campos obrigatórios: {', '.join(faltando)}")
+                else:
+                    if not all(uploaded_files):
+                        st.error("Você precisa anexar todos os arquivos para renomeá-los e baixá-los.")
+                    else:
+                        arquivos_renomeados = []
+                        extensoes = [os.path.splitext(f.name)[1] for f in uploaded_files if f is not None]
+                        
+                        nomes_gerados_para_download = gerar_nomes_arquivos(
+                            qtd_projetos, tipo_arquivo, numero_tarefa, tipo_fase, disciplina,
+                            descricao_selecionada, sigla_descricao, revisao, extensoes
+                        )
 
-                for idx, file in enumerate(uploaded_files):
-                    if file:
-                        prefixo_arquivo = extrair_prefixo(tipo_arquivo)
-                        prefixo_fase = extrair_prefixo(tipo_fase)
-                        prefixo_disciplina = extrair_prefixo(disciplina)
+                        for idx, file in enumerate(uploaded_files):
+                            if file:
+                                novo_nome = nomes_gerados_para_download[idx]
+                                conteudo = file.read()
+                                arquivos_renomeados.append((novo_nome, conteudo))
 
-                        ordem = str(idx + 1).zfill(2)
-                        total = str(int(qtd_projetos)).zfill(2)
-                        codigo_arquivo = f"{ordem}{total}"
+                        if len(arquivos_renomeados) == int(qtd_projetos):
+                            st.session_state['arquivos_prontos'] = arquivos_renomeados
+                            st.success("Arquivos processados. Aguarde para download!")
 
-                        if descricao_selecionada == "Sem descrição":
-                            if tipo_fase in ["Em andamento", "Interno"]:
-                                nome_base = f"{prefixo_arquivo}-{numero_tarefa}-{prefixo_disciplina}-{codigo_arquivo}-V0{revisao}"    
-                            else:
-                                nome_base = f"{prefixo_arquivo}-{numero_tarefa}-{prefixo_fase}-{prefixo_disciplina}-{codigo_arquivo}-REV0{revisao}"
+                            try:
+                                aba = conectar_google_sheets()
+                                fuso_brasil = pytz.timezone("America/Sao_Paulo")
+                                data_hora = datetime.now(fuso_brasil).strftime("%d/%m/%Y %H:%M:%S")
+                                for nome_arquivo, _ in arquivos_renomeados:
+                                    aba.append_row([responsavel, caminho, nome_arquivo, data_hora])
+                                st.success("Nomes dos arquivos registrados no Google Sheets.")
+                            except Exception as e:
+                                st.error(f"Erro ao registrar no Google Sheets: {e}")
                         else:
-                            if tipo_fase in ["Em andamento", "Interno"]:
-                                nome_base = f"{prefixo_arquivo}-{numero_tarefa}-{prefixo_disciplina}-{codigo_arquivo}-{sigla_descricao}-V0{revisao}"
-                            else:
-                                nome_base = f"{prefixo_arquivo}-{numero_tarefa}-{prefixo_fase}-{prefixo_disciplina}-{codigo_arquivo}-{sigla_descricao}-REV0{revisao}"
+                            st.error("Ocorreu um erro inesperado na geração dos nomes para download.")
 
-                        extensao = os.path.splitext(file.name)[1]
-                        novo_nome = f"{nome_base}{extensao}"
+                if 'arquivos_prontos' in st.session_state:
+                    st.markdown("### Baixar Arquivos")
+                    
+                    # --- COMEÇA A MUDANÇA AQUI ---
+                    if st.session_state['arquivos_prontos']: # Verifica se há arquivos para processar
+                        zip_buffer = io.BytesIO() # Cria um buffer em memória para o arquivo ZIP
+                        
+                        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+                            for nome_arquivo, conteudo in st.session_state['arquivos_prontos']:
+                                # Adiciona cada arquivo ao ZIP com seu novo nome e conteúdo
+                                zip_file.writestr(nome_arquivo, conteudo)
+                        
+                        # Prepara o buffer para leitura e download
+                        zip_buffer.seek(0) 
+                        
+                        st.download_button(
+                            label="Baixar Todos os Arquivos (ZIP)",
+                            data=zip_buffer.getvalue(),
+                            file_name="arquivos_renomeados.zip", # Nome do arquivo ZIP
+                            mime="application/zip",
+                            key="download_all_zip"
+                        )
+                        st.info(f"Após o download, mova o arquivo para: `{caminho}`")
+                    else:
+                        st.warning("Nenhum arquivo processado para download.")
 
-                        conteudo = file.read()
-                        arquivos_renomeados.append((novo_nome, conteudo))
 
-                if len(arquivos_renomeados) == int(qtd_projetos):
-                    st.session_state['arquivos_prontos'] = arquivos_renomeados
-                    st.success("Arquivos processados. Aguarde para download!")
+        with col_btn2:
+            if st.button("Nome dos arquivos"):
+                campos_obrigatorios = {
+                    "Responsável": responsavel.strip(),
+                    "Caminho": caminho.strip(),
+                    "Tipo de Arquivo": tipo_arquivo if tipo_arquivo != "Selecione" else "",
+                    "Fase": tipo_fase if tipo_fase != "Selecione" else "",
+                    "Disciplina": disciplina if disciplina != "Selecine" else "",
+                    "Tarefa": tarefa_selecionada if tarefa_selecionada else ""
+                }
 
-                    try:
-                        aba = conectar_google_sheets()
-                        for nome_arquivo, _ in arquivos_renomeados:
+                faltando = [nome for nome, valor in campos_obrigatorios.items() if not valor]
+
+                if faltando:
+                    st.error(f"Preencha os campos obrigatórios para gerar os nomes: {', '.join(faltando)}")
+                else:
+                    extensoes = [os.path.splitext(f.name)[1] if f is not None else "" for f in uploaded_files]
+                    
+                    nomes_gerados = gerar_nomes_arquivos(
+                        qtd_projetos, tipo_arquivo, numero_tarefa, tipo_fase, disciplina,
+                        descricao_selecionada, sigla_descricao, revisao, extensoes
+                    )
+
+                    if nomes_gerados:
+                        st.markdown("### Nomes Gerados")
+
+                        for idx, nome in enumerate(nomes_gerados):
+                            st.write(f"**Arquivo {idx + 1}:**") 
+                            st.code(nome, language='text')
+
+                        try:
+                            aba = conectar_google_sheets()
                             fuso_brasil = pytz.timezone("America/Sao_Paulo")
                             data_hora = datetime.now(fuso_brasil).strftime("%d/%m/%Y %H:%M:%S")
-                            aba.append_row([responsavel, caminho, nome_arquivo, data_hora])
-                    except Exception as e:
-                        st.error(f"Erro ao registrar no Google Sheets: {e}")
-                else:
-                    st.error("Você precisa anexar todos os arquivos antes de processar.")
-
-        if 'arquivos_prontos' in st.session_state:
-            st.markdown("### Baixar Arquivos")
-            for nome_arquivo, conteudo in st.session_state['arquivos_prontos']:
-                st.download_button(
-                    label=f"Baixar {nome_arquivo}",
-                    data=conteudo,
-                    file_name=nome_arquivo,
-                    mime="application/octet-stream"
-                )
-            st.info(f"Após o download, mova o arquivo para: `{caminho}`")
+                            for nome_arquivo in nomes_gerados:
+                                aba.append_row([responsavel, caminho, nome_arquivo, data_hora])
+                            st.success("Nomes dos arquivos registrados no Google Sheets.")
+                        except Exception as e:
+                            st.error(f"Erro ao registrar os nomes no Google Sheets: {e}")
+                    else:
+                        st.warning("Nenhum nome de arquivo gerado. Verifique a quantidade de arquivos.")
 
     with abas[0]:
         c1, c2 = st.columns([2, 1])
