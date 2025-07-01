@@ -158,7 +158,7 @@ if perfil == "Liderancas":
         with col1:
             tipo_arquivo = st.selectbox("Arquivo", [
                 "Selecione", "ATA - Ata de Reunião", "DGN - Diagnóstico", "EST - Estudo", "GPKG - GeoPackage", "LAU - Laudo", "LAYOUT - Layout", "MANUAL - Manual", 
-                "MDL - Modelo", "MIN - Minuta", "MMD - Memorial Descritivo",  "OFI - Oficio", "PLN - Planilha", "PPT - Apresentação", "PRJ - Projeto", "RLT - Relatório", "TRF - Termo de Referência"
+                "MIN - Minuta", "MMD - Memorial Descritivo",  "OFI - Oficio", "PLN - Planilha", "PPT - Apresentação", "PRJ - Projeto", "RLT - Relatório", "TRF - Termo de Referência"
             ])
         with col2:
             nomes_tarefas = [t["nome_da_tarefa"] for t in tarefas]
@@ -436,7 +436,7 @@ else:
         with col1:
             tipo_arquivo = st.selectbox("Arquivo", [
                 "Selecione", "ATA - Ata de Reunião", "DGN - Diagnóstico", "EST - Estudo", "GPKG - GeoPackage", "LAU - Laudo", "LAYOUT - Layout", "MANUAL - Manual", 
-                "MDL - Modelo", "MIN - Minuta", "MMD - Memorial Descritivo",  "OFI - Oficio", "PLN - Planilha", "PPT - Apresentação", "PRJ - Projeto", "RLT - Relatório", "TRF - Termo de Referência"
+                "MIN - Minuta", "MMD - Memorial Descritivo",  "OFI - Oficio", "PLN - Planilha", "PPT - Apresentação", "PRJ - Projeto", "RLT - Relatório", "TRF - Termo de Referência"
             ])
         with col2:
             nomes_tarefas = [t["nome_da_tarefa"] for t in tarefas]
